@@ -42,7 +42,7 @@ class Square {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(10, 20, 30);
+  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
@@ -54,7 +54,6 @@ class _BoardActivityState extends State<BoardActivity> {
 
   _handleTap(int column, int row) {
     if (grid[column][row].isMine == null) {
-      print("initializing...");
       _initializeGrid(column, row);
     }
   }
@@ -74,22 +73,25 @@ class _BoardActivityState extends State<BoardActivity> {
     }
     for (int i = 0; i < columnCount; i++) {
       for (int j = 0; j < rowCount; j++) {
-        if (i - 1 > 0 && j - 1 > 0) {
+        if (grid[i][j].isMine == null) {
+          grid[i][j].isMine = false;
+        }
+        if (i - 1 >= 0 && j - 1 >= 0) {
           if (grid[i - 1][j - 1].isMine == true) {
             grid[i][j].adjacentMines++;
           }
         }
-        if (j - 1 > 0) {
+        if (j - 1 >= 0) {
           if (grid[i][j - 1].isMine == true) {
             grid[i][j].adjacentMines++;
           }
         }
-        if (i + 1 < columnCount && j - 1 > 0) {
+        if (i + 1 < columnCount && j - 1 >= 0) {
           if (grid[i + 1][j - 1].isMine == true) {
             grid[i][j].adjacentMines++;
           }
         }
-        if (i - 1 > 0) {
+        if (i - 1 >= 0) {
           if (grid[i - 1][j].isMine == true) {
             grid[i][j].adjacentMines++;
           }
@@ -99,7 +101,7 @@ class _BoardActivityState extends State<BoardActivity> {
             grid[i][j].adjacentMines++;
           }
         }
-        if (i - 1 > 0 && j + 1 < rowCount) {
+        if (i - 1 >= 0 && j + 1 < rowCount) {
           if (grid[i - 1][j + 1].isMine == true) {
             grid[i][j].adjacentMines++;
           }
