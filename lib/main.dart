@@ -48,7 +48,7 @@ class BoardPosition {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
+  _BoardActivityState createState() => _BoardActivityState(12, 22, 40);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
@@ -95,6 +95,21 @@ class _BoardActivityState extends State<BoardActivity> {
     if (grid[column][row].isCovered == true &&
         grid[column][row].isFlagged == false) {
       _uncoverSquare(column, row);
+    }
+    if (grid[column][row].isCovered == false) {
+      int adjacentFlags = 0;
+      _getAdjacentSquares(column, row).forEach((position) {
+        if (grid[position.column][position.row].isFlagged == true) {
+          adjacentFlags++;
+        }
+      });
+      if (adjacentFlags == grid[column][row].adjacentMines) {
+        _getAdjacentSquares(column, row).forEach((position) {
+          if (grid[position.column][position.row].isFlagged == false) {
+            _uncoverSquare(position.column, position.row);
+          }
+        });
+      }
     }
   }
 
