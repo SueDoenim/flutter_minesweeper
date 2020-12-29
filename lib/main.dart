@@ -48,13 +48,13 @@ class BoardPosition {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
+  _BoardActivityState createState() => _BoardActivityState(35, 100, 0);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
-  int columnCount;
-  int rowCount;
-  int mineCount;
+  final int columnCount;
+  final int rowCount;
+  final int mineCount;
   int coveredCount;
   List<List<Square>> grid;
 
@@ -91,10 +91,15 @@ class _BoardActivityState extends State<BoardActivity> {
     if (grid[column][row].isMine == null) {
       _initializeGrid(column, row);
     }
-    _uncoverSquare(column, row);
+    if (grid[column][row].isCovered == true) {
+      _uncoverSquare(column, row);
+    }
   }
 
-  _handleLongPress(int column, int row) {}
+  _handleLongPress(int column, int row) {
+    print("There was a long press");
+    print(coveredCount.toString());
+  }
 
   _initializeGrid(column, row) {
     Random random = Random();
@@ -123,7 +128,25 @@ class _BoardActivityState extends State<BoardActivity> {
     });
   }
 
-  _uncoverSquare(int column, int row) {}
+  _uncoverSquare(int column, int row) {
+    grid[column][row].isCovered = false;
+    coveredCount--;
+    if (grid[column][row].isMine == true) {
+      _handleLose();
+    }
+    if (grid[column][row].adjacentMines == 0) {
+      _getAdjacentSquares(column, row).forEach((position) {
+        if (grid[position.column][position.row].isCovered == true) {
+          _uncoverSquare(position.column, position.row);
+        }
+      });
+    }
+    setState(() {});
+  }
+
+  _handleLose() {
+    print("u lose haha lozer");
+  }
 
   _BoardActivityState(this.columnCount, this.rowCount, this.mineCount) {
     this.coveredCount = columnCount * rowCount;
