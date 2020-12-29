@@ -40,6 +40,12 @@ class Square {
   Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines);
 }
 
+class BoardPosition {
+  int column;
+  int row;
+  BoardPosition(this.column, this.row);
+}
+
 class BoardActivity extends StatefulWidget {
   @override
   _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
@@ -52,74 +58,72 @@ class _BoardActivityState extends State<BoardActivity> {
   int coveredCount;
   List<List<Square>> grid;
 
+  List<BoardPosition> _getAdjacentSquares(int column, int row) {
+    List<BoardPosition> adjacentSquares = [];
+    if (column - 1 >= 0 && row - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(column - 1, row - 1));
+    }
+    if (row - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(column, row - 1));
+    }
+    if (column + 1 < columnCount && row - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(column + 1, row - 1));
+    }
+    if (column - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(column - 1, row));
+    }
+    if (column + 1 < columnCount) {
+      adjacentSquares.add(BoardPosition(column + 1, row));
+    }
+    if (column - 1 >= 0 && row + 1 < rowCount) {
+      adjacentSquares.add(BoardPosition(column - 1, row + 1));
+    }
+    if (row + 1 < rowCount) {
+      adjacentSquares.add(BoardPosition(column, row + 1));
+    }
+    if (column + 1 < columnCount && row + 1 < rowCount) {
+      adjacentSquares.add(BoardPosition(column + 1, row + 1));
+    }
+    return adjacentSquares;
+  }
+
   _handleTap(int column, int row) {
     if (grid[column][row].isMine == null) {
       _initializeGrid(column, row);
     }
+    _uncoverSquare(column, row);
   }
 
   _handleLongPress(int column, int row) {}
 
   _initializeGrid(column, row) {
     Random random = Random();
-    for (int i = 0; i < mineCount; i++) {
-      int mineColumn, mineRow;
-      do {
-        mineColumn = random.nextInt(columnCount);
-        mineRow = random.nextInt(rowCount);
-      } while ((mineColumn == column && mineRow == row) ||
-          (grid[mineColumn][mineRow].isMine == true));
-      grid[mineColumn][mineRow].isMine = true;
-    }
-    for (int i = 0; i < columnCount; i++) {
-      for (int j = 0; j < rowCount; j++) {
-        if (grid[i][j].isMine == null) {
-          grid[i][j].isMine = false;
-        }
-        if (i - 1 >= 0 && j - 1 >= 0) {
-          if (grid[i - 1][j - 1].isMine == true) {
-            grid[i][j].adjacentMines++;
+    setState(() {
+      for (int i = 0; i < mineCount; i++) {
+        int mineColumn, mineRow;
+        do {
+          mineColumn = random.nextInt(columnCount);
+          mineRow = random.nextInt(rowCount);
+        } while ((mineColumn == column && mineRow == row) ||
+            (grid[mineColumn][mineRow].isMine == true));
+        grid[mineColumn][mineRow].isMine = true;
+      }
+      for (int i = 0; i < columnCount; i++) {
+        for (int j = 0; j < rowCount; j++) {
+          if (grid[i][j].isMine == null) {
+            grid[i][j].isMine = false;
           }
-        }
-        if (j - 1 >= 0) {
-          if (grid[i][j - 1].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (i + 1 < columnCount && j - 1 >= 0) {
-          if (grid[i + 1][j - 1].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (i - 1 >= 0) {
-          if (grid[i - 1][j].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (i + 1 < columnCount) {
-          if (grid[i + 1][j].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (i - 1 >= 0 && j + 1 < rowCount) {
-          if (grid[i - 1][j + 1].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (j + 1 < rowCount) {
-          if (grid[i][j + 1].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        }
-        if (i + 1 < columnCount && j + 1 < rowCount) {
-          if (grid[i + 1][j + 1].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
+          _getAdjacentSquares(i, j).forEach((position) {
+            if (grid[position.column][position.row].isMine == true) {
+              grid[i][j].adjacentMines++;
+            }
+          });
         }
       }
-    }
-    setState(() {});
+    });
   }
+
+  _uncoverSquare(int column, int row) {}
 
   _BoardActivityState(this.columnCount, this.rowCount, this.mineCount) {
     this.coveredCount = columnCount * rowCount;
@@ -148,13 +152,11 @@ class _BoardActivityState extends State<BoardActivity> {
                       false)
                   ? Colors.red
                   : Colors.green,
-              child: Text(
-                grid[position % columnCount][position ~/ columnCount]
+              child: Center(
+                child: Text(grid[position % columnCount]
+                        [position ~/ columnCount]
                     .adjacentMines
-                    .toString(),
-                style: TextStyle(
-                  color: Colors.black,
-                ),
+                    .toString()), //Icon(Icons.flare),
               )),
           onTap: () =>
               _handleTap(position % columnCount, position ~/ columnCount),
