@@ -1,11 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
 
-class Square {
-  bool isMine;
-  bool isCovered;
-  bool isFlagged;
-  int adjacentMines;
-}
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,6 +31,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class Square {
+  bool isMine;
+  bool isCovered;
+  bool isFlagged;
+  int adjacentMines;
+
+  Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines);
+}
+
 class BoardActivity extends StatefulWidget {
   @override
   _BoardActivityState createState() => _BoardActivityState(10, 20, 30);
@@ -48,18 +53,79 @@ class _BoardActivityState extends State<BoardActivity> {
   List<List<Square>> grid;
 
   _handleTap(int column, int row) {
-
+    if (grid[column][row].isMine == null) {
+      print("initializing...");
+      _initializeGrid(column, row);
+    }
   }
 
-  _handleLongPress(int column, int row) {
+  _handleLongPress(int column, int row) {}
 
+  _initializeGrid(column, row) {
+    Random random = Random();
+    for (int i = 0; i < mineCount; i++) {
+      int mineColumn, mineRow;
+      do {
+        mineColumn = random.nextInt(columnCount);
+        mineRow = random.nextInt(rowCount);
+      } while ((mineColumn == column && mineRow == row) ||
+          (grid[mineColumn][mineRow].isMine == true));
+      grid[mineColumn][mineRow].isMine = true;
+    }
+    for (int i = 0; i < columnCount; i++) {
+      for (int j = 0; j < rowCount; j++) {
+        if (i - 1 > 0 && j - 1 > 0) {
+          if (grid[i - 1][j - 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (j - 1 > 0) {
+          if (grid[i][j - 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (i + 1 < columnCount && j - 1 > 0) {
+          if (grid[i + 1][j - 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (i - 1 > 0) {
+          if (grid[i - 1][j].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (i + 1 < columnCount) {
+          if (grid[i + 1][j].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (i - 1 > 0 && j + 1 < rowCount) {
+          if (grid[i - 1][j + 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (j + 1 < rowCount) {
+          if (grid[i][j + 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+        if (i + 1 < columnCount && j + 1 < rowCount) {
+          if (grid[i + 1][j + 1].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        }
+      }
+    }
+    setState(() {});
   }
 
   _BoardActivityState(this.columnCount, this.rowCount, this.mineCount) {
     this.coveredCount = columnCount * rowCount;
-    /*this.grid = () async {
-      await
-    }*/
+    grid = List.generate(columnCount, (i) {
+      return List.generate(rowCount, (j) {
+        return Square(null, true, false, 0);
+      }, growable: false);
+    }, growable: false);
   }
 
   @override
@@ -67,17 +133,31 @@ class _BoardActivityState extends State<BoardActivity> {
     return InteractiveViewer(
       child: GridView.builder(
         physics: NeverScrollableScrollPhysics(),
+        itemCount: columnCount * rowCount,
+        shrinkWrap: true,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columnCount,
         ),
         itemBuilder: (context, position) => GestureDetector(
           child: Container(
-            margin: EdgeInsets.all(2),
-            color: Colors.red,
-            child: Text(position.toString())
-          ),
-          onTap: _handleTap(position % columnCount, position ~/ columnCount),
-          onLongPress: _handleLongPress(position % columnCount, position ~/ columnCount),
+              margin: EdgeInsets.all(2),
+              color: (grid[position % columnCount][position ~/ columnCount]
+                          .isMine ??
+                      false)
+                  ? Colors.red
+                  : Colors.green,
+              child: Text(
+                grid[position % columnCount][position ~/ columnCount]
+                    .adjacentMines
+                    .toString(),
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              )),
+          onTap: () =>
+              _handleTap(position % columnCount, position ~/ columnCount),
+          onLongPress: () =>
+              _handleLongPress(position % columnCount, position ~/ columnCount),
         ),
       ),
     );
