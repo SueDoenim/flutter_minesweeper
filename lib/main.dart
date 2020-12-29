@@ -48,7 +48,7 @@ class BoardPosition {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(35, 100, 0);
+  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
@@ -56,6 +56,7 @@ class _BoardActivityState extends State<BoardActivity> {
   final int rowCount;
   final int mineCount;
   int coveredCount;
+  int flaggedCount;
   List<List<Square>> grid;
 
   List<BoardPosition> _getAdjacentSquares(int column, int row) {
@@ -91,41 +92,40 @@ class _BoardActivityState extends State<BoardActivity> {
     if (grid[column][row].isMine == null) {
       _initializeGrid(column, row);
     }
-    if (grid[column][row].isCovered == true) {
+    if (grid[column][row].isCovered == true &&
+        grid[column][row].isFlagged == false) {
       _uncoverSquare(column, row);
     }
   }
 
   _handleLongPress(int column, int row) {
-    print("There was a long press");
-    print(coveredCount.toString());
+    _flagSquare(column, row);
   }
 
   _initializeGrid(column, row) {
     Random random = Random();
-    setState(() {
-      for (int i = 0; i < mineCount; i++) {
-        int mineColumn, mineRow;
-        do {
-          mineColumn = random.nextInt(columnCount);
-          mineRow = random.nextInt(rowCount);
-        } while ((mineColumn == column && mineRow == row) ||
-            (grid[mineColumn][mineRow].isMine == true));
-        grid[mineColumn][mineRow].isMine = true;
-      }
-      for (int i = 0; i < columnCount; i++) {
-        for (int j = 0; j < rowCount; j++) {
-          if (grid[i][j].isMine == null) {
-            grid[i][j].isMine = false;
-          }
-          _getAdjacentSquares(i, j).forEach((position) {
-            if (grid[position.column][position.row].isMine == true) {
-              grid[i][j].adjacentMines++;
-            }
-          });
+    for (int i = 0; i < mineCount; i++) {
+      int mineColumn, mineRow;
+      do {
+        mineColumn = random.nextInt(columnCount);
+        mineRow = random.nextInt(rowCount);
+      } while ((mineColumn == column && mineRow == row) ||
+          (grid[mineColumn][mineRow].isMine == true));
+      grid[mineColumn][mineRow].isMine = true;
+    }
+    for (int i = 0; i < columnCount; i++) {
+      for (int j = 0; j < rowCount; j++) {
+        if (grid[i][j].isMine == null) {
+          grid[i][j].isMine = false;
         }
+        _getAdjacentSquares(i, j).forEach((position) {
+          if (grid[position.column][position.row].isMine == true) {
+            grid[i][j].adjacentMines++;
+          }
+        });
       }
-    });
+    }
+    setState(() {});
   }
 
   _uncoverSquare(int column, int row) {
@@ -136,12 +136,31 @@ class _BoardActivityState extends State<BoardActivity> {
     }
     if (grid[column][row].adjacentMines == 0) {
       _getAdjacentSquares(column, row).forEach((position) {
-        if (grid[position.column][position.row].isCovered == true) {
+        if (grid[position.column][position.row].isCovered == true &&
+            grid[position.column][position.row].isFlagged == false) {
           _uncoverSquare(position.column, position.row);
         }
       });
     }
     setState(() {});
+    if (coveredCount == mineCount) {
+      _handleWin();
+    }
+  }
+
+  _flagSquare(int column, int row) {
+    if (grid[column][row].isFlagged == false) {
+      grid[column][row].isFlagged = true;
+      flaggedCount++;
+    } else {
+      grid[column][row].isFlagged = false;
+      flaggedCount--;
+    }
+    setState(() {});
+  }
+
+  _handleWin() {
+    print("yay.");
   }
 
   _handleLose() {
@@ -150,12 +169,25 @@ class _BoardActivityState extends State<BoardActivity> {
 
   _BoardActivityState(this.columnCount, this.rowCount, this.mineCount) {
     this.coveredCount = columnCount * rowCount;
+    this.flaggedCount = 0;
     grid = List.generate(columnCount, (i) {
       return List.generate(rowCount, (j) {
         return Square(null, true, false, 0);
       }, growable: false);
     }, growable: false);
   }
+
+  final List<IconData> adjacencyIcons = [
+    Icons.filter_none,
+    Icons.filter_1,
+    Icons.filter_2,
+    Icons.filter_3,
+    Icons.filter_4,
+    Icons.filter_5,
+    Icons.filter_6,
+    Icons.filter_7,
+    Icons.filter_8,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -171,15 +203,23 @@ class _BoardActivityState extends State<BoardActivity> {
           child: Container(
               margin: EdgeInsets.all(2),
               color: (grid[position % columnCount][position ~/ columnCount]
-                          .isMine ??
-                      false)
-                  ? Colors.red
-                  : Colors.green,
+                      .isCovered)
+                  ? Colors.green
+                  : Colors.grey,
               child: Center(
-                child: Text(grid[position % columnCount]
-                        [position ~/ columnCount]
-                    .adjacentMines
-                    .toString()), //Icon(Icons.flare),
+                child: Icon(grid[position % columnCount]
+                            [position ~/ columnCount]
+                        .isCovered
+                    ? (grid[position % columnCount][position ~/ columnCount]
+                            .isFlagged
+                        ? Icons.outlined_flag
+                        : Icons.crop_square)
+                    : (grid[position % columnCount][position ~/ columnCount]
+                            .isMine
+                        ? Icons.flare
+                        : (adjacencyIcons[grid[position % columnCount]
+                                [position ~/ columnCount]
+                            .adjacentMines]))),
               )),
           onTap: () =>
               _handleTap(position % columnCount, position ~/ columnCount),
