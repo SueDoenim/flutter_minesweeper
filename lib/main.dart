@@ -12,19 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
+      title: "Minesweeper",
       home: BoardActivity(),
       //home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -50,7 +38,7 @@ class BoardPosition {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
+  _BoardActivityState createState() => _BoardActivityState(7, 20, 20);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
@@ -209,40 +197,45 @@ class _BoardActivityState extends State<BoardActivity> {
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      child: GridView.builder(
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: columnCount * rowCount,
-        shrinkWrap: true,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columnCount,
-        ),
-        itemBuilder: (context, position) => GestureDetector(
-          child: Container(
-              margin: EdgeInsets.all(2),
-              color: (grid[position % columnCount][position ~/ columnCount]
-                      .isCovered)
-                  ? Colors.green
-                  : Colors.grey,
-              child: Center(
-                child: Icon(grid[position % columnCount]
-                            [position ~/ columnCount]
-                        .isCovered
-                    ? (grid[position % columnCount][position ~/ columnCount]
-                            .isFlagged
-                        ? Icons.outlined_flag
-                        : Icons.crop_square)
-                    : (grid[position % columnCount][position ~/ columnCount]
-                            .isMine
-                        ? Icons.flare
-                        : (adjacencyIcons[grid[position % columnCount]
-                                [position ~/ columnCount]
-                            .adjacentMines]))),
-              )),
-          onTap: () =>
-              _handleTap(position % columnCount, position ~/ columnCount),
-          onLongPress: () =>
-              _handleLongPress(position % columnCount, position ~/ columnCount),
+    return Container(
+      child: Center(
+        child: InteractiveViewer(
+          maxScale: 10,
+          minScale: 0.5,
+          child: Table(
+            defaultColumnWidth:
+                FixedColumnWidth(MediaQuery.of(context).size.height / rowCount),
+            children: List.generate(
+              rowCount,
+              (row) => TableRow(
+                children: List.generate(
+                  columnCount,
+                  (column) => AspectRatio(
+                    aspectRatio: 1,
+                    child: GestureDetector(
+                      child: Container(
+                          //margin: EdgeInsets.all(2),
+                          color: (grid[column][row].isCovered)
+                              ? Colors.green
+                              : Colors.grey,
+                          child: Center(
+                            child: Icon(grid[column][row].isCovered
+                                ? (grid[column][row].isFlagged
+                                    ? Icons.outlined_flag
+                                    : Icons.crop_square)
+                                : (grid[column][row].isMine
+                                    ? Icons.flare
+                                    : (adjacencyIcons[
+                                        grid[column][row].adjacentMines]))),
+                          )),
+                      onTap: () => _handleTap(column, row),
+                      onLongPress: () => _handleLongPress(column, row),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -333,3 +326,42 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+//In case I decide to go back to grid
+/*
+        child: GridView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: columnCount * rowCount,
+          shrinkWrap: false,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: rowCount,
+          ),
+          itemBuilder: (context, position) => GestureDetector(
+            child: Container(
+                margin: EdgeInsets.all(2),
+                color: (grid[position % columnCount][position ~/ columnCount]
+                        .isCovered)
+                    ? Colors.green
+                    : Colors.grey,
+                child: Center(
+                  child: Icon(grid[position % columnCount]
+                              [position ~/ columnCount]
+                          .isCovered
+                      ? (grid[position % columnCount][position ~/ columnCount]
+                              .isFlagged
+                          ? Icons.outlined_flag
+                          : Icons.crop_square)
+                      : (grid[position % columnCount][position ~/ columnCount]
+                              .isMine
+                          ? Icons.flare
+                          : (adjacencyIcons[grid[position % columnCount]
+                                  [position ~/ columnCount]
+                              .adjacentMines]))),
+                )),
+            onTap: () =>
+                _handleTap(position % columnCount, position ~/ columnCount),
+            onLongPress: () => _handleLongPress(
+                position % columnCount, position ~/ columnCount),
+          ),
+        ),*/
