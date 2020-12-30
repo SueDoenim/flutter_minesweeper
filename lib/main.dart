@@ -36,8 +36,10 @@ class Square {
   bool isCovered;
   bool isFlagged;
   int adjacentMines;
+  int adjacentFlags;
 
-  Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines);
+  Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines,
+      this.adjacentFlags);
 }
 
 class BoardPosition {
@@ -48,7 +50,7 @@ class BoardPosition {
 
 class BoardActivity extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(12, 22, 40);
+  _BoardActivityState createState() => _BoardActivityState(7, 10, 10);
 }
 
 class _BoardActivityState extends State<BoardActivity> {
@@ -97,13 +99,7 @@ class _BoardActivityState extends State<BoardActivity> {
       _uncoverSquare(column, row);
     }
     if (grid[column][row].isCovered == false) {
-      int adjacentFlags = 0;
-      _getAdjacentSquares(column, row).forEach((position) {
-        if (grid[position.column][position.row].isFlagged == true) {
-          adjacentFlags++;
-        }
-      });
-      if (adjacentFlags == grid[column][row].adjacentMines) {
+      if (grid[column][row].adjacentFlags == grid[column][row].adjacentMines) {
         _getAdjacentSquares(column, row).forEach((position) {
           if (grid[position.column][position.row].isFlagged == false) {
             _uncoverSquare(position.column, position.row);
@@ -144,6 +140,9 @@ class _BoardActivityState extends State<BoardActivity> {
   }
 
   _uncoverSquare(int column, int row) {
+    if (grid[column][row].isCovered == false) {
+      return;
+    }
     grid[column][row].isCovered = false;
     coveredCount--;
     if (grid[column][row].isMine == true) {
@@ -167,9 +166,13 @@ class _BoardActivityState extends State<BoardActivity> {
     if (grid[column][row].isFlagged == false) {
       grid[column][row].isFlagged = true;
       flaggedCount++;
+      _getAdjacentSquares(column, row).forEach(
+          (position) => grid[position.column][position.row].adjacentFlags++);
     } else {
       grid[column][row].isFlagged = false;
       flaggedCount--;
+      _getAdjacentSquares(column, row).forEach(
+          (position) => grid[position.column][position.row].adjacentFlags--);
     }
     setState(() {});
   }
@@ -187,7 +190,7 @@ class _BoardActivityState extends State<BoardActivity> {
     this.flaggedCount = 0;
     grid = List.generate(columnCount, (i) {
       return List.generate(rowCount, (j) {
-        return Square(null, true, false, 0);
+        return Square(null, true, false, 0, 0);
       }, growable: false);
     }, growable: false);
   }
