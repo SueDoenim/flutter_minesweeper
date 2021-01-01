@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Minesweeper",
-      home: MinesweeperBoard(),
+      home: BoardWidget(),
     );
   }
 }
@@ -29,94 +29,94 @@ class Square {
 }
 
 class BoardPosition {
-  int column;
   int row;
-  BoardPosition(this.column, this.row);
+  int column;
+  BoardPosition(this.row, this.column);
 }
 
-class MinesweeperBoard extends StatefulWidget {
+class BoardWidget extends StatefulWidget {
   @override
-  _MinesweeperBoardState createState() => _MinesweeperBoardState(7, 20, 20);
+  _BoardWidgetState createState() => _BoardWidgetState(20, 7, 20);
 }
 
-class _MinesweeperBoardState extends State<MinesweeperBoard> {
-  final int columnCount;
+class _BoardWidgetState extends State<BoardWidget> {
   final int rowCount;
+  final int columnCount;
   final int mineCount;
   int coveredCount;
   int flaggedCount;
   List<List<Square>> grid;
 
-  List<BoardPosition> _getAdjacentSquares(int column, int row) {
+  List<BoardPosition> _getAdjacentSquares(int row, int column) {
     List<BoardPosition> adjacentSquares = [];
-    if (column - 1 >= 0 && row - 1 >= 0) {
-      adjacentSquares.add(BoardPosition(column - 1, row - 1));
+    if (row - 1 >= 0 && column - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(row - 1, column - 1));
     }
     if (row - 1 >= 0) {
-      adjacentSquares.add(BoardPosition(column, row - 1));
+      adjacentSquares.add(BoardPosition(row - 1, column));
     }
-    if (column + 1 < columnCount && row - 1 >= 0) {
-      adjacentSquares.add(BoardPosition(column + 1, row - 1));
+    if (row - 1 >= 0 && column + 1 < columnCount) {
+      adjacentSquares.add(BoardPosition(row - 1, column + 1));
     }
     if (column - 1 >= 0) {
-      adjacentSquares.add(BoardPosition(column - 1, row));
+      adjacentSquares.add(BoardPosition(row, column - 1));
     }
     if (column + 1 < columnCount) {
-      adjacentSquares.add(BoardPosition(column + 1, row));
+      adjacentSquares.add(BoardPosition(row, column + 1));
     }
-    if (column - 1 >= 0 && row + 1 < rowCount) {
-      adjacentSquares.add(BoardPosition(column - 1, row + 1));
+    if (row + 1 < rowCount && column - 1 >= 0) {
+      adjacentSquares.add(BoardPosition(row + 1, column - 1));
     }
     if (row + 1 < rowCount) {
-      adjacentSquares.add(BoardPosition(column, row + 1));
+      adjacentSquares.add(BoardPosition(row + 1, column));
     }
-    if (column + 1 < columnCount && row + 1 < rowCount) {
-      adjacentSquares.add(BoardPosition(column + 1, row + 1));
+    if (row + 1 < rowCount && column + 1 < columnCount) {
+      adjacentSquares.add(BoardPosition(row + 1, column + 1));
     }
     return adjacentSquares;
   }
 
-  _handleTap(int column, int row) {
-    if (grid[column][row].isMine == null) {
-      _initializeGrid(column, row);
+  _handleTap(int row, int column) {
+    if (grid[row][column].isMine == null) {
+      _initializeGrid(row, column);
     }
-    if (grid[column][row].isCovered == true &&
-        grid[column][row].isFlagged == false) {
-      _uncoverSquare(column, row);
+    if (grid[row][column].isCovered == true &&
+        grid[row][column].isFlagged == false) {
+      _uncoverSquare(row, column);
     }
-    if (grid[column][row].isCovered == false) {
-      if (grid[column][row].adjacentFlags == grid[column][row].adjacentMines) {
-        _getAdjacentSquares(column, row).forEach((position) {
-          if (grid[position.column][position.row].isFlagged == false) {
-            _uncoverSquare(position.column, position.row);
+    if (grid[row][column].isCovered == false) {
+      if (grid[row][column].adjacentFlags == grid[row][column].adjacentMines) {
+        _getAdjacentSquares(row, column).forEach((position) {
+          if (grid[position.row][position.column].isFlagged == false) {
+            _uncoverSquare(position.row, position.column);
           }
         });
       }
     }
   }
 
-  _handleLongPress(int column, int row) {
-    _flagSquare(column, row);
+  _handleLongPress(int row, int column) {
+    _flagSquare(row, column);
   }
 
-  _initializeGrid(column, row) {
+  _initializeGrid(row, column) {
     Random random = Random();
     for (int i = 0; i < mineCount; i++) {
-      int mineColumn, mineRow;
+      int mineRow, mineColumn;
       do {
-        mineColumn = random.nextInt(columnCount);
         mineRow = random.nextInt(rowCount);
-      } while ((mineColumn == column && mineRow == row) ||
-          (grid[mineColumn][mineRow].isMine == true));
-      grid[mineColumn][mineRow].isMine = true;
+        mineColumn = random.nextInt(columnCount);
+      } while ((mineRow == row && mineColumn == column) ||
+          (grid[mineRow][mineColumn].isMine == true));
+      grid[mineRow][mineColumn].isMine = true;
     }
-    for (int i = 0; i < columnCount; i++) {
-      for (int j = 0; j < rowCount; j++) {
+    for (int i = 0; i < rowCount; i++) {
+      for (int j = 0; j < columnCount; j++) {
         if (grid[i][j].isMine == null) {
           grid[i][j].isMine = false;
         }
         _getAdjacentSquares(i, j).forEach((position) {
-          if (grid[position.column][position.row].isMine == true) {
+          if (grid[position.row][position.column].isMine == true) {
             grid[i][j].adjacentMines++;
           }
         });
@@ -125,20 +125,20 @@ class _MinesweeperBoardState extends State<MinesweeperBoard> {
     setState(() {});
   }
 
-  _uncoverSquare(int column, int row) {
-    if (grid[column][row].isCovered == false) {
+  _uncoverSquare(int row, int column) {
+    if (grid[row][column].isCovered == false) {
       return;
     }
-    grid[column][row].isCovered = false;
+    grid[row][column].isCovered = false;
     coveredCount--;
-    if (grid[column][row].isMine == true) {
+    if (grid[row][column].isMine == true) {
       _handleLose();
     }
-    if (grid[column][row].adjacentMines == 0) {
-      _getAdjacentSquares(column, row).forEach((position) {
-        if (grid[position.column][position.row].isCovered == true &&
-            grid[position.column][position.row].isFlagged == false) {
-          _uncoverSquare(position.column, position.row);
+    if (grid[row][column].adjacentMines == 0) {
+      _getAdjacentSquares(row, column).forEach((position) {
+        if (grid[position.row][position.column].isCovered == true &&
+            grid[position.row][position.column].isFlagged == false) {
+          _uncoverSquare(position.row, position.column);
         }
       });
     }
@@ -148,17 +148,17 @@ class _MinesweeperBoardState extends State<MinesweeperBoard> {
     }
   }
 
-  _flagSquare(int column, int row) {
-    if (grid[column][row].isFlagged == false) {
-      grid[column][row].isFlagged = true;
+  _flagSquare(int row, int column) {
+    if (grid[row][column].isFlagged == false) {
+      grid[row][column].isFlagged = true;
       flaggedCount++;
-      _getAdjacentSquares(column, row).forEach(
-          (position) => grid[position.column][position.row].adjacentFlags++);
+      _getAdjacentSquares(row, column).forEach(
+          (position) => grid[position.row][position.column].adjacentFlags++);
     } else {
-      grid[column][row].isFlagged = false;
+      grid[row][column].isFlagged = false;
       flaggedCount--;
-      _getAdjacentSquares(column, row).forEach(
-          (position) => grid[position.column][position.row].adjacentFlags--);
+      _getAdjacentSquares(row, column).forEach(
+          (position) => grid[position.row][position.column].adjacentFlags--);
     }
     setState(() {});
   }
@@ -171,11 +171,11 @@ class _MinesweeperBoardState extends State<MinesweeperBoard> {
     print("u lose haha lozer");
   }
 
-  _MinesweeperBoardState(this.columnCount, this.rowCount, this.mineCount) {
-    this.coveredCount = columnCount * rowCount;
+  _BoardWidgetState(this.rowCount, this.columnCount, this.mineCount) {
+    this.coveredCount = rowCount * columnCount;
     this.flaggedCount = 0;
-    grid = List.generate(columnCount, (i) {
-      return List.generate(rowCount, (j) {
+    grid = List.generate(rowCount, (i) {
+      return List.generate(columnCount, (j) {
         return Square(null, true, false, 0, 0);
       }, growable: false);
     }, growable: false);
@@ -196,30 +196,30 @@ class _MinesweeperBoardState extends State<MinesweeperBoard> {
               (row) => TableRow(
                 children: List.generate(
                     columnCount,
-                    (column) => BoardSquare(
-                          grid[column][row],
-                          onTap: () => _handleTap(column, row),
-                          onLongPress: () => _handleLongPress(column, row),
+                    (column) => SquareWidget(
+                          grid[row][column],
+                          onTap: () => _handleTap(row, column),
+                          onLongPress: () => _handleLongPress(row, column),
                         ) /*AspectRatio(
                     aspectRatio: 1,
                     child: GestureDetector(
                       child: Container(
                           //margin: EdgeInsets.all(2),
-                          color: (grid[column][row].isCovered)
+                          color: (grid[row][column].isCovered)
                               ? Colors.green
                               : Colors.grey,
                           child: Center(
-                            child: Icon(grid[column][row].isCovered
-                                ? (grid[column][row].isFlagged
+                            child: Icon(grid[row][column].isCovered
+                                ? (grid[row][column].isFlagged
                                     ? Icons.outlined_flag
                                     : Icons.crop_square)
-                                : (grid[column][row].isMine
+                                : (grid[row][column].isMine
                                     ? Icons.flare
                                     : (adjacencyIcons[
-                                        grid[column][row].adjacentMines]))),
+                                        grid[row][column].adjacentMines]))),
                           )),
-                      onTap: () => _handleTap(column, row),
-                      onLongPress: () => _handleLongPress(column, row),
+                      onTap: () => _handleTap(row, column),
+                      onLongPress: () => _handleLongPress(row, column),
                     ),
                   ),*/
                     ),
@@ -232,20 +232,20 @@ class _MinesweeperBoardState extends State<MinesweeperBoard> {
   }
 }
 
-typedef GestureHandlerFunction = void Function(int column, int row);
+typedef GestureHandlerFunction = void Function(int row, int column);
 
-class BoardSquare extends StatefulWidget {
-  BoardSquare(this.data, {this.onTap, this.onLongPress});
+class SquareWidget extends StatefulWidget {
+  SquareWidget(this.data, {this.onTap, this.onLongPress});
 
   final Square data;
   final Function onTap;
   final Function onLongPress;
 
   @override
-  _BoardSquareState createState() => _BoardSquareState();
+  _SquareWidgetState createState() => _SquareWidgetState();
 }
 
-class _BoardSquareState extends State<BoardSquare> {
+class _SquareWidgetState extends State<SquareWidget> {
   static const List<IconData> adjacencyIcons = [
     Icons.filter_none,
     Icons.filter_1,
