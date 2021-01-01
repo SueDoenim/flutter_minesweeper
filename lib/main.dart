@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Minesweeper",
-      home: BoardActivity(),
+      home: MinesweeperBoard(),
     );
   }
 }
@@ -34,12 +34,12 @@ class BoardPosition {
   BoardPosition(this.column, this.row);
 }
 
-class BoardActivity extends StatefulWidget {
+class MinesweeperBoard extends StatefulWidget {
   @override
-  _BoardActivityState createState() => _BoardActivityState(7, 20, 20);
+  _MinesweeperBoardState createState() => _MinesweeperBoardState(7, 20, 20);
 }
 
-class _BoardActivityState extends State<BoardActivity> {
+class _MinesweeperBoardState extends State<MinesweeperBoard> {
   final int columnCount;
   final int rowCount;
   final int mineCount;
@@ -171,7 +171,7 @@ class _BoardActivityState extends State<BoardActivity> {
     print("u lose haha lozer");
   }
 
-  _BoardActivityState(this.columnCount, this.rowCount, this.mineCount) {
+  _MinesweeperBoardState(this.columnCount, this.rowCount, this.mineCount) {
     this.coveredCount = columnCount * rowCount;
     this.flaggedCount = 0;
     grid = List.generate(columnCount, (i) {
@@ -181,34 +181,26 @@ class _BoardActivityState extends State<BoardActivity> {
     }, growable: false);
   }
 
-  final List<IconData> adjacencyIcons = [
-    Icons.filter_none,
-    Icons.filter_1,
-    Icons.filter_2,
-    Icons.filter_3,
-    Icons.filter_4,
-    Icons.filter_5,
-    Icons.filter_6,
-    Icons.filter_7,
-    Icons.filter_8,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SafeArea(
       child: Center(
         child: InteractiveViewer(
           maxScale: 10,
           minScale: 0.5,
           child: Table(
-            defaultColumnWidth:
-                FixedColumnWidth(MediaQuery.of(context).size.height / rowCount),
+            defaultColumnWidth: FixedColumnWidth(
+                (MediaQuery.of(context).size.height - 56) / rowCount),
             children: List.generate(
               rowCount,
               (row) => TableRow(
                 children: List.generate(
-                  columnCount,
-                  (column) => AspectRatio(
+                    columnCount,
+                    (column) => BoardSquare(
+                          grid[column][row],
+                          onTap: () => _handleTap(column, row),
+                          onLongPress: () => _handleLongPress(column, row),
+                        ) /*AspectRatio(
                     aspectRatio: 1,
                     child: GestureDetector(
                       child: Container(
@@ -229,12 +221,62 @@ class _BoardActivityState extends State<BoardActivity> {
                       onTap: () => _handleTap(column, row),
                       onLongPress: () => _handleLongPress(column, row),
                     ),
-                  ),
-                ),
+                  ),*/
+                    ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+typedef GestureHandlerFunction = void Function(int column, int row);
+
+class BoardSquare extends StatefulWidget {
+  BoardSquare(this.data, {this.onTap, this.onLongPress});
+
+  final Square data;
+  final Function onTap;
+  final Function onLongPress;
+
+  @override
+  _BoardSquareState createState() => _BoardSquareState();
+}
+
+class _BoardSquareState extends State<BoardSquare> {
+  static const List<IconData> adjacencyIcons = [
+    Icons.filter_none,
+    Icons.filter_1,
+    Icons.filter_2,
+    Icons.filter_3,
+    Icons.filter_4,
+    Icons.filter_5,
+    Icons.filter_6,
+    Icons.filter_7,
+    Icons.filter_8,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: GestureDetector(
+        child: Container(
+            //margin: EdgeInsets.all(2),
+            color: (widget.data.isCovered) ? Colors.green : Colors.grey,
+            child: Center(
+              child: Icon(widget.data.isCovered
+                  ? (widget.data.isFlagged
+                      ? Icons.outlined_flag
+                      : Icons.crop_square)
+                  : (widget.data.isMine
+                      ? Icons.flare
+                      : (adjacencyIcons[widget.data.adjacentMines]))),
+            )),
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
       ),
     );
   }
