@@ -13,9 +13,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "Minesweeper",
       home: BoardWidget(
-        rowCount: 20,
+        rowCount: 10,
         columnCount: 7,
-        mineCount: 20,
+        mineCount: 10,
       ),
     );
   }
@@ -64,6 +64,33 @@ class _BoardWidgetState extends State<BoardWidget> {
   int coveredCount;
   int flaggedCount;
   List<List<Square>> grid;
+
+  _initializeGrid(int row, int column) {
+    setState(() {
+      Random random = Random();
+      for (int i = 0; i < widget.mineCount; i++) {
+        int mineRow, mineColumn;
+        do {
+          mineRow = random.nextInt(widget.rowCount);
+          mineColumn = random.nextInt(widget.columnCount);
+        } while ((mineRow == row && mineColumn == column) ||
+            (grid[mineRow][mineColumn].isMine == true));
+        grid[mineRow][mineColumn].isMine = true;
+      }
+      for (int i = 0; i < widget.rowCount; i++) {
+        for (int j = 0; j < widget.columnCount; j++) {
+          if (grid[i][j].isMine == null) {
+            grid[i][j].isMine = false;
+          }
+          _getAdjacentSquares(i, j).forEach((position) {
+            if (grid[position.row][position.column].isMine == true) {
+              grid[i][j].adjacentMines++;
+            }
+          });
+        }
+      }
+    });
+  }
 
   List<BoardPosition> _getAdjacentSquares(int row, int column) {
     List<BoardPosition> adjacentSquares = [];
@@ -117,68 +144,44 @@ class _BoardWidgetState extends State<BoardWidget> {
     _flagSquare(row, column);
   }
 
-  _initializeGrid(row, column) {
-    Random random = Random();
-    for (int i = 0; i < widget.mineCount; i++) {
-      int mineRow, mineColumn;
-      do {
-        mineRow = random.nextInt(widget.rowCount);
-        mineColumn = random.nextInt(widget.columnCount);
-      } while ((mineRow == row && mineColumn == column) ||
-          (grid[mineRow][mineColumn].isMine == true));
-      grid[mineRow][mineColumn].isMine = true;
-    }
-    for (int i = 0; i < widget.rowCount; i++) {
-      for (int j = 0; j < widget.columnCount; j++) {
-        if (grid[i][j].isMine == null) {
-          grid[i][j].isMine = false;
-        }
-        _getAdjacentSquares(i, j).forEach((position) {
-          if (grid[position.row][position.column].isMine == true) {
-            grid[i][j].adjacentMines++;
-          }
-        });
-      }
-    }
-    setState(() {});
-  }
-
   _uncoverSquare(int row, int column) {
     if (grid[row][column].isCovered == false) {
       return;
     }
-    grid[row][column].isCovered = false;
-    coveredCount--;
-    if (grid[row][column].isMine == true) {
-      _handleLose();
-    }
-    if (grid[row][column].adjacentMines == 0) {
-      _getAdjacentSquares(row, column).forEach((position) {
-        if (grid[position.row][position.column].isCovered == true &&
-            grid[position.row][position.column].isFlagged == false) {
-          _uncoverSquare(position.row, position.column);
-        }
-      });
-    }
-    setState(() {});
-    if (coveredCount == widget.mineCount) {
-      _handleWin();
-    }
+    setState(() {
+      grid[row][column].isCovered = false;
+      coveredCount--;
+      if (grid[row][column].isMine == true) {
+        _handleLose();
+      }
+      if (grid[row][column].adjacentMines == 0) {
+        _getAdjacentSquares(row, column).forEach((position) {
+          if (grid[position.row][position.column].isCovered == true &&
+              grid[position.row][position.column].isFlagged == false) {
+            _uncoverSquare(position.row, position.column);
+          }
+        });
+      }
+      if (coveredCount == widget.mineCount) {
+        _handleWin();
+      }
+    });
   }
 
   _flagSquare(int row, int column) {
-    if (grid[row][column].isFlagged == false) {
-      grid[row][column].isFlagged = true;
-      flaggedCount++;
-      _getAdjacentSquares(row, column).forEach(
-          (position) => grid[position.row][position.column].adjacentFlags++);
-    } else {
-      grid[row][column].isFlagged = false;
-      flaggedCount--;
-      _getAdjacentSquares(row, column).forEach(
-          (position) => grid[position.row][position.column].adjacentFlags--);
-    }
-    setState(() {});
+    setState(() {
+      if (grid[row][column].isFlagged == false) {
+        grid[row][column].isFlagged = true;
+        flaggedCount++;
+        _getAdjacentSquares(row, column).forEach(
+            (position) => grid[position.row][position.column].adjacentFlags++);
+      } else {
+        grid[row][column].isFlagged = false;
+        flaggedCount--;
+        _getAdjacentSquares(row, column).forEach(
+            (position) => grid[position.row][position.column].adjacentFlags--);
+      }
+    });
   }
 
   _handleWin() {
@@ -208,29 +211,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                           grid[row][column],
                           onTap: () => _handleTap(row, column),
                           onLongPress: () => _handleLongPress(row, column),
-                        ) /*AspectRatio(
-                    aspectRatio: 1,
-                    child: GestureDetector(
-                      child: Container(
-                          //margin: EdgeInsets.all(2),
-                          color: (grid[row][column].isCovered)
-                              ? Colors.green
-                              : Colors.grey,
-                          child: Center(
-                            child: Icon(grid[row][column].isCovered
-                                ? (grid[row][column].isFlagged
-                                    ? Icons.outlined_flag
-                                    : Icons.crop_square)
-                                : (grid[row][column].isMine
-                                    ? Icons.flare
-                                    : (adjacencyIcons[
-                                        grid[row][column].adjacentMines]))),
-                          )),
-                      onTap: () => _handleTap(row, column),
-                      onLongPress: () => _handleLongPress(row, column),
-                    ),
-                  ),*/
-                    ),
+                        )),
               ),
             ),
           ),
@@ -239,8 +220,6 @@ class _BoardWidgetState extends State<BoardWidget> {
     );
   }
 }
-
-typedef GestureHandlerFunction = void Function(int row, int column);
 
 class SquareWidget extends StatefulWidget {
   SquareWidget(this.data, {this.onTap, this.onLongPress});
@@ -289,42 +268,3 @@ class _SquareWidgetState extends State<SquareWidget> {
     );
   }
 }
-
-//In case I decide to go back to grid
-/*
-        child: GridView.builder(
-          scrollDirection: Axis.horizontal,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: columnCount * rowCount,
-          shrinkWrap: false,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: rowCount,
-          ),
-          itemBuilder: (context, position) => GestureDetector(
-            child: Container(
-                margin: EdgeInsets.all(2),
-                color: (grid[position % columnCount][position ~/ columnCount]
-                        .isCovered)
-                    ? Colors.green
-                    : Colors.grey,
-                child: Center(
-                  child: Icon(grid[position % columnCount]
-                              [position ~/ columnCount]
-                          .isCovered
-                      ? (grid[position % columnCount][position ~/ columnCount]
-                              .isFlagged
-                          ? Icons.outlined_flag
-                          : Icons.crop_square)
-                      : (grid[position % columnCount][position ~/ columnCount]
-                              .isMine
-                          ? Icons.flare
-                          : (adjacencyIcons[grid[position % columnCount]
-                                  [position ~/ columnCount]
-                              .adjacentMines]))),
-                )),
-            onTap: () =>
-                _handleTap(position % columnCount, position ~/ columnCount),
-            onLongPress: () => _handleLongPress(
-                position % columnCount, position ~/ columnCount),
-          ),
-        ),*/
