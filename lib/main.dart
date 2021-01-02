@@ -12,37 +12,55 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Minesweeper",
-      home: BoardWidget(),
+      home: BoardWidget(
+        rowCount: 20,
+        columnCount: 7,
+        mineCount: 20,
+      ),
     );
   }
 }
 
 class Square {
+  Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines,
+      this.adjacentFlags);
   bool isMine;
   bool isCovered;
   bool isFlagged;
   int adjacentMines;
   int adjacentFlags;
-
-  Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines,
-      this.adjacentFlags);
 }
 
 class BoardPosition {
+  BoardPosition(this.row, this.column);
   int row;
   int column;
-  BoardPosition(this.row, this.column);
 }
 
 class BoardWidget extends StatefulWidget {
-  @override
-  _BoardWidgetState createState() => _BoardWidgetState(20, 7, 20);
-}
-
-class _BoardWidgetState extends State<BoardWidget> {
+  BoardWidget(
+      {@required this.rowCount,
+      @required this.columnCount,
+      @required this.mineCount});
   final int rowCount;
   final int columnCount;
   final int mineCount;
+  @override
+  _BoardWidgetState createState() =>
+      _BoardWidgetState(rowCount, columnCount, mineCount);
+}
+
+class _BoardWidgetState extends State<BoardWidget> {
+  _BoardWidgetState(rowCount, columnCount, mineCount) {
+    this.coveredCount = rowCount * columnCount;
+    this.flaggedCount = 0;
+    grid = List.generate(rowCount, (i) {
+      return List.generate(columnCount, (j) {
+        return Square(null, true, false, 0, 0);
+      }, growable: false);
+    }, growable: false);
+  }
+
   int coveredCount;
   int flaggedCount;
   List<List<Square>> grid;
@@ -55,22 +73,22 @@ class _BoardWidgetState extends State<BoardWidget> {
     if (row - 1 >= 0) {
       adjacentSquares.add(BoardPosition(row - 1, column));
     }
-    if (row - 1 >= 0 && column + 1 < columnCount) {
+    if (row - 1 >= 0 && column + 1 < widget.columnCount) {
       adjacentSquares.add(BoardPosition(row - 1, column + 1));
     }
     if (column - 1 >= 0) {
       adjacentSquares.add(BoardPosition(row, column - 1));
     }
-    if (column + 1 < columnCount) {
+    if (column + 1 < widget.columnCount) {
       adjacentSquares.add(BoardPosition(row, column + 1));
     }
-    if (row + 1 < rowCount && column - 1 >= 0) {
+    if (row + 1 < widget.rowCount && column - 1 >= 0) {
       adjacentSquares.add(BoardPosition(row + 1, column - 1));
     }
-    if (row + 1 < rowCount) {
+    if (row + 1 < widget.rowCount) {
       adjacentSquares.add(BoardPosition(row + 1, column));
     }
-    if (row + 1 < rowCount && column + 1 < columnCount) {
+    if (row + 1 < widget.rowCount && column + 1 < widget.columnCount) {
       adjacentSquares.add(BoardPosition(row + 1, column + 1));
     }
     return adjacentSquares;
@@ -101,17 +119,17 @@ class _BoardWidgetState extends State<BoardWidget> {
 
   _initializeGrid(row, column) {
     Random random = Random();
-    for (int i = 0; i < mineCount; i++) {
+    for (int i = 0; i < widget.mineCount; i++) {
       int mineRow, mineColumn;
       do {
-        mineRow = random.nextInt(rowCount);
-        mineColumn = random.nextInt(columnCount);
+        mineRow = random.nextInt(widget.rowCount);
+        mineColumn = random.nextInt(widget.columnCount);
       } while ((mineRow == row && mineColumn == column) ||
           (grid[mineRow][mineColumn].isMine == true));
       grid[mineRow][mineColumn].isMine = true;
     }
-    for (int i = 0; i < rowCount; i++) {
-      for (int j = 0; j < columnCount; j++) {
+    for (int i = 0; i < widget.rowCount; i++) {
+      for (int j = 0; j < widget.columnCount; j++) {
         if (grid[i][j].isMine == null) {
           grid[i][j].isMine = false;
         }
@@ -143,7 +161,7 @@ class _BoardWidgetState extends State<BoardWidget> {
       });
     }
     setState(() {});
-    if (coveredCount == mineCount) {
+    if (coveredCount == widget.mineCount) {
       _handleWin();
     }
   }
@@ -171,16 +189,6 @@ class _BoardWidgetState extends State<BoardWidget> {
     print("u lose haha lozer");
   }
 
-  _BoardWidgetState(this.rowCount, this.columnCount, this.mineCount) {
-    this.coveredCount = rowCount * columnCount;
-    this.flaggedCount = 0;
-    grid = List.generate(rowCount, (i) {
-      return List.generate(columnCount, (j) {
-        return Square(null, true, false, 0, 0);
-      }, growable: false);
-    }, growable: false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -190,12 +198,12 @@ class _BoardWidgetState extends State<BoardWidget> {
           minScale: 0.5,
           child: Table(
             defaultColumnWidth: FixedColumnWidth(
-                (MediaQuery.of(context).size.height - 56) / rowCount),
+                (MediaQuery.of(context).size.height - 56) / widget.rowCount),
             children: List.generate(
-              rowCount,
+              widget.rowCount,
               (row) => TableRow(
                 children: List.generate(
-                    columnCount,
+                    widget.columnCount,
                     (column) => SquareWidget(
                           grid[row][column],
                           onTap: () => _handleTap(row, column),
