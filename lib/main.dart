@@ -195,29 +195,34 @@ class _BoardWidgetState extends State<BoardWidget> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: InteractiveViewer(
-          maxScale: 10,
-          minScale: 0.5,
-          child: Table(
-            defaultColumnWidth: FixedColumnWidth(
-                (MediaQuery.of(context).size.height - 56) / widget.rowCount),
-            children: List.generate(
-              widget.rowCount,
-              (row) => TableRow(
-                children: List.generate(
-                    widget.columnCount,
-                    (column) => SquareWidget(
-                          grid[row][column],
-                          onTap: () => _handleTap(row, column),
-                          onLongPress: () => _handleLongPress(row, column),
-                        )),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+        child: LayoutBuilder(
+            builder: (context, constraints) => Container(
+                  child: InteractiveViewer(
+                    maxScale:
+                        min(widget.rowCount, widget.columnCount).toDouble(),
+                    minScale: 1,
+                    child: Center(
+                      child: Table(
+                        defaultColumnWidth: FixedColumnWidth(min(
+                            constraints.maxHeight / widget.rowCount,
+                            constraints.maxWidth / widget.columnCount)),
+                        children: List.generate(
+                          widget.rowCount,
+                          (row) => TableRow(
+                            children: List.generate(
+                                widget.columnCount,
+                                (column) => SquareWidget(
+                                      grid[row][column],
+                                      onTap: () => _handleTap(row, column),
+                                      onLongPress: () =>
+                                          _handleLongPress(row, column),
+                                    )),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )));
   }
 }
 
