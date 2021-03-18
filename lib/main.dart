@@ -1,3 +1,5 @@
+// import 'dart:html';
+// import 'dart:js';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -64,6 +66,8 @@ class _BoardWidgetState extends State<BoardWidget> {
   int coveredCount;
   int flaggedCount;
   List<List<Square>> grid;
+
+  TransformationController _controller = TransformationController();
 
   _initializeGrid(int row, int column) {
     setState(() {
@@ -194,35 +198,86 @@ class _BoardWidgetState extends State<BoardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: LayoutBuilder(
-            builder: (context, constraints) => Container(
-                  child: InteractiveViewer(
-                    maxScale:
-                        min(widget.rowCount, widget.columnCount).toDouble(),
-                    minScale: 1,
-                    child: Center(
-                      child: Table(
-                        defaultColumnWidth: FixedColumnWidth(min(
-                            constraints.maxHeight / widget.rowCount,
-                            constraints.maxWidth / widget.columnCount)),
-                        children: List.generate(
-                          widget.rowCount,
-                          (row) => TableRow(
-                            children: List.generate(
-                                widget.columnCount,
-                                (column) => SquareWidget(
-                                      grid[row][column],
-                                      onTap: () => _handleTap(row, column),
-                                      onLongPress: () =>
-                                          _handleLongPress(row, column),
-                                    )),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )));
+    return SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+      final double squareWidth = min(constraints.maxHeight / widget.rowCount,
+          constraints.maxWidth / widget.columnCount);
+      _controller.addListener(() {
+        // To keep the user from zooming into the margins, we use a custom
+        // TransformationController for the InteractiveViewer.
+        // The controller is a 4x4 matrix (column major) of the form
+        // [S 0 0 X]
+        // [0 S 0 Y]
+        // [0 0 S 0]
+        // [0 0 0 1]
+        // where S is the scale and X and Y are translations.
+        if (widget.rowCount * squareWidth < constraints.maxHeight) {
+          // There are margins on the top and bottom.
+
+          // Keep the margins equal, until the user has zoomed in far enough
+          // that there are none. Then, don't allow the user to pan into the
+          // top margin.
+          _controller.value[13] = min(
+              _controller.value[13],
+              max(
+                  0.5 * (1 - _controller.value[0]) * constraints.maxHeight,
+                  -0.5 *
+                      _controller.value[0] *
+                      (constraints.maxHeight - squareWidth * widget.rowCount)));
+
+          // Same for bottom margin.
+          _controller.value[13] = max(
+              _controller.value[13],
+              min(
+                  0.5 * (1 - _controller.value[0]) * constraints.maxHeight,
+                  -0.5 *
+                      (_controller.value[0] * widget.rowCount * squareWidth +
+                          constraints.maxHeight * (_controller.value[0] - 2))));
+        } else {
+          // There are margins on the left and right.
+
+          // Same for left margin.
+          _controller.value[12] = min(
+              _controller.value[12],
+              max(
+                  0.5 * (1 - _controller.value[0]) * constraints.maxWidth,
+                  -0.5 *
+                      _controller.value[0] *
+                      (constraints.maxWidth -
+                          squareWidth * widget.columnCount)));
+
+          // Same for right margin.
+          _controller.value[12] = max(
+              _controller.value[12],
+              min(
+                  0.5 * (1 - _controller.value[0]) * constraints.maxWidth,
+                  -0.5 *
+                      (_controller.value[0] * widget.columnCount * squareWidth +
+                          constraints.maxWidth * (_controller.value[0] - 2))));
+        }
+      });
+      return InteractiveViewer(
+        maxScale: min(widget.rowCount, widget.columnCount).toDouble(),
+        minScale: 1,
+        transformationController: _controller,
+        child: Center(
+          child: Table(
+            defaultColumnWidth: FixedColumnWidth(squareWidth),
+            children: List.generate(
+              widget.rowCount,
+              (row) => TableRow(
+                children: List.generate(
+                    widget.columnCount,
+                    (column) => SquareWidget(
+                          grid[row][column],
+                          onTap: () => _handleTap(row, column),
+                          onLongPress: () => _handleLongPress(row, column),
+                        )),
+              ),
+            ),
+          ),
+        ),
+      );
+    }));
   }
 }
 
@@ -256,7 +311,6 @@ class _SquareWidgetState extends State<SquareWidget> {
       aspectRatio: 1,
       child: GestureDetector(
         child: Container(
-            //margin: EdgeInsets.all(2),
             color: (widget.data.isCovered) ? Colors.green : Colors.grey,
             child: Center(
               child: Icon(widget.data.isCovered
