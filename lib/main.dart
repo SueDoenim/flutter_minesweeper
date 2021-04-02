@@ -1,5 +1,3 @@
-// import 'dart:html';
-// import 'dart:js';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -26,7 +24,7 @@ class MyApp extends StatelessWidget {
 class Square {
   Square(this.isMine, this.isCovered, this.isFlagged, this.adjacentMines,
       this.adjacentFlags);
-  bool isMine;
+  bool? isMine;
   bool isCovered;
   bool isFlagged;
   int adjacentMines;
@@ -41,9 +39,9 @@ class BoardPosition {
 
 class BoardWidget extends StatefulWidget {
   BoardWidget(
-      {@required this.rowCount,
-      @required this.columnCount,
-      @required this.mineCount});
+      {required this.rowCount,
+      required this.columnCount,
+      required this.mineCount});
   final int rowCount;
   final int columnCount;
   final int mineCount;
@@ -63,9 +61,9 @@ class _BoardWidgetState extends State<BoardWidget> {
     }, growable: false);
   }
 
-  int coveredCount;
-  int flaggedCount;
-  List<List<Square>> grid;
+  late int coveredCount;
+  late int flaggedCount;
+  late List<List<Square>> grid;
 
   TransformationController _controller = TransformationController();
 
@@ -285,8 +283,8 @@ class SquareWidget extends StatefulWidget {
   SquareWidget(this.data, {this.onTap, this.onLongPress});
 
   final Square data;
-  final Function onTap;
-  final Function onLongPress;
+  final Function? onTap;
+  final Function? onLongPress;
 
   @override
   _SquareWidgetState createState() => _SquareWidgetState();
@@ -317,12 +315,12 @@ class _SquareWidgetState extends State<SquareWidget> {
                   ? (widget.data.isFlagged
                       ? Icons.outlined_flag
                       : Icons.crop_square)
-                  : (widget.data.isMine
+                  : (widget.data.isMine!
                       ? Icons.flare
                       : (adjacencyIcons[widget.data.adjacentMines]))),
             )),
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
+        onTap: widget.onTap as void Function()?,
+        onLongPress: widget.onLongPress as void Function()?,
       ),
     );
   }
