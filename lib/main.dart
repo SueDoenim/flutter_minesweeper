@@ -67,28 +67,25 @@ class _BoardWidgetState extends State<BoardWidget> {
   TransformationController _controller = TransformationController();
 
   void _initializeGrid(int row, int column) {
-    setState(() {
-      // Use a shuffled list to randomly place mines anywhere but where the
-      // player clicked.
-      int _squareCount = widget.rowCount * widget.columnCount;
-      List<int> _randomList = List.generate(_squareCount - 1, (i) => i)
-        ..shuffle()
-        ..insert(0, _squareCount - 1);
+    // Use a shuffled list to randomly place mines anywhere but where the
+    // player clicked.
+    int _squareCount = widget.rowCount * widget.columnCount;
+    List<int> _randomList = List.generate(_squareCount - 1, (i) => i)
+      ..shuffle()
+      ..insert(row * widget.columnCount + column, _squareCount - 1);
 
-      for (int i = 0; i < widget.rowCount; i++) {
-        for (int j = 0; j < widget.columnCount; j++) {
-          if (_randomList[(i * widget.columnCount + j) % _squareCount] <
-              widget.mineCount) {
-            grid[i][j].isMine = true;
-            _getAdjacentSquares(i, j).forEach((position) {
-              grid[position.row][position.column].adjacentMines++;
-            });
-          } else {
-            grid[i][j].isMine = false;
-          }
+    for (int r = 0; r < widget.rowCount; r++) {
+      for (int c = 0; c < widget.columnCount; c++) {
+        if (_randomList[r * widget.columnCount + c] < widget.mineCount) {
+          grid[r][c].isMine = true;
+          _getAdjacentSquares(r, c).forEach((position) {
+            grid[position.row][position.column].adjacentMines++;
+          });
+        } else {
+          grid[r][c].isMine = false;
         }
       }
-    });
+    }
   }
 
   List<BoardPosition> _getAdjacentSquares(int row, int column) {
@@ -318,6 +315,7 @@ class _SquareWidgetState extends State<SquareWidget> {
             )),
         onTap: widget.onTap as void Function()?,
         onLongPress: widget.onLongPress as void Function()?,
+        onSecondaryTap: widget.onLongPress as void Function()?,
       ),
     );
   }
