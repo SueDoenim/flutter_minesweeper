@@ -1,9 +1,12 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'dart:math';
+
+import 'package:universal_html/html.dart';
 
 void main() {
+  // Disable right click context menu.
+  window.onContextMenu.listen((MouseEvent e) => e.preventDefault());
   runApp(MyApp());
 }
 
