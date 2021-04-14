@@ -51,44 +51,41 @@ class BoardWidget extends StatefulWidget {
 }
 
 class _BoardWidgetState extends State<BoardWidget> {
-  _BoardWidgetState(rowCount, columnCount, mineCount) {
-    this.coveredCount = rowCount * columnCount;
-    this.flaggedCount = 0;
-    grid = List.generate(rowCount, (i) {
-      return List.generate(columnCount, (j) {
-        return Square(null, true, false, 0, 0);
-      }, growable: false);
-    }, growable: false);
-  }
+  _BoardWidgetState(rowCount, columnCount, mineCount)
+      : coveredCount = rowCount * columnCount,
+        flaggedCount = 0,
+        grid = List.generate(rowCount, (row) {
+          return List.generate(columnCount, (column) {
+            return Square(null, true, false, 0, 0);
+          });
+        });
 
-  late int coveredCount;
-  late int flaggedCount;
-  late List<List<Square>> grid;
+  int coveredCount;
+  int flaggedCount;
+  List<List<Square>> grid;
 
   TransformationController _controller = TransformationController();
 
-  _initializeGrid(int row, int column) {
+  void _initializeGrid(int row, int column) {
     setState(() {
-      Random random = Random();
-      for (int i = 0; i < widget.mineCount; i++) {
-        int mineRow, mineColumn;
-        do {
-          mineRow = random.nextInt(widget.rowCount);
-          mineColumn = random.nextInt(widget.columnCount);
-        } while ((mineRow == row && mineColumn == column) ||
-            (grid[mineRow][mineColumn].isMine == true));
-        grid[mineRow][mineColumn].isMine = true;
-      }
+      // Use a shuffled list to randomly place mines anywhere but where the
+      // player clicked.
+      int _squareCount = widget.rowCount * widget.columnCount;
+      List<int> _randomList = List.generate(_squareCount - 1, (i) => i)
+        ..shuffle()
+        ..insert(0, _squareCount - 1);
+
       for (int i = 0; i < widget.rowCount; i++) {
         for (int j = 0; j < widget.columnCount; j++) {
-          if (grid[i][j].isMine == null) {
+          if (_randomList[(i * widget.columnCount + j) % _squareCount] <
+              widget.mineCount) {
+            grid[i][j].isMine = true;
+            _getAdjacentSquares(i, j).forEach((position) {
+              grid[position.row][position.column].adjacentMines++;
+            });
+          } else {
             grid[i][j].isMine = false;
           }
-          _getAdjacentSquares(i, j).forEach((position) {
-            if (grid[position.row][position.column].isMine == true) {
-              grid[i][j].adjacentMines++;
-            }
-          });
         }
       }
     });
@@ -280,11 +277,11 @@ class _BoardWidgetState extends State<BoardWidget> {
 }
 
 class SquareWidget extends StatefulWidget {
-  SquareWidget(this.data, {this.onTap, this.onLongPress});
+  SquareWidget(this.data, {required this.onTap, required this.onLongPress});
 
   final Square data;
-  final Function? onTap;
-  final Function? onLongPress;
+  final Function onTap;
+  final Function onLongPress;
 
   @override
   _SquareWidgetState createState() => _SquareWidgetState();
@@ -315,7 +312,7 @@ class _SquareWidgetState extends State<SquareWidget> {
                   ? (widget.data.isFlagged
                       ? Icons.outlined_flag
                       : Icons.crop_square)
-                  : (widget.data.isMine!
+                  : ((widget.data.isMine ?? false)
                       ? Icons.flare
                       : (adjacencyIcons[widget.data.adjacentMines]))),
             )),
