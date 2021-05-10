@@ -3,13 +3,12 @@ import 'main.dart';
 
 class Square {
   Square(
-    this.isMine,
     this.isCovered,
     this.isFlagged,
     this.adjacentMines,
     this.adjacentFlags,
   );
-  bool? isMine;
+  late bool isMine;
   bool isCovered;
   bool isFlagged;
   int adjacentMines;
@@ -38,6 +37,7 @@ class GameWidget extends StatefulWidget {
 }
 
 class _GameWidgetState extends State<GameWidget> {
+  late bool _isInitialized;
   late int _coveredCount;
   late int _flaggedCount;
   late List<List<Square>> _grid;
@@ -45,11 +45,16 @@ class _GameWidgetState extends State<GameWidget> {
   @override
   void initState() {
     super.initState();
+    _initializeGame();
+  }
+
+  void _initializeGame() {
+    _isInitialized = false;
     _coveredCount = widget.rowCount * widget.columnCount;
     _flaggedCount = 0;
     _grid = List.generate(widget.rowCount, (r) {
       return List.generate(widget.columnCount, (c) {
-        return Square(null, true, false, 0, 0);
+        return Square(true, false, 0, 0);
       });
     });
   }
@@ -74,6 +79,8 @@ class _GameWidgetState extends State<GameWidget> {
         }
       }
     }
+
+    _isInitialized = true;
   }
 
   List<BoardPosition> _getAdjacentSquares(int row, int column) {
@@ -108,9 +115,6 @@ class _GameWidgetState extends State<GameWidget> {
   }
 
   void _handleTap(int row, int column) {
-    if (_grid[row][column].isMine == null) {
-      _initializeGrid(row, column);
-    }
     if (_grid[row][column].isCovered == true &&
         _grid[row][column].isFlagged == false) {
       _uncoverSquare(row, column);
@@ -136,6 +140,9 @@ class _GameWidgetState extends State<GameWidget> {
       return;
     }
     setState(() {
+      if (!_isInitialized) {
+        _initializeGrid(row, column);
+      }
       _grid[row][column].isCovered = false;
       _coveredCount--;
       if (_grid[row][column].isMine == true) {
@@ -156,19 +163,21 @@ class _GameWidgetState extends State<GameWidget> {
   }
 
   void _flagSquare(int row, int column) {
-    setState(() {
-      if (_grid[row][column].isFlagged == false) {
-        _grid[row][column].isFlagged = true;
-        _flaggedCount++;
-        _getAdjacentSquares(row, column).forEach(
-            (position) => _grid[position.row][position.column].adjacentFlags++);
-      } else {
-        _grid[row][column].isFlagged = false;
-        _flaggedCount--;
-        _getAdjacentSquares(row, column).forEach(
-            (position) => _grid[position.row][position.column].adjacentFlags--);
-      }
-    });
+    if (_grid[row][column].isCovered) {
+      setState(() {
+        if (_grid[row][column].isFlagged == false) {
+          _grid[row][column].isFlagged = true;
+          _flaggedCount++;
+          _getAdjacentSquares(row, column).forEach((position) =>
+              _grid[position.row][position.column].adjacentFlags++);
+        } else {
+          _grid[row][column].isFlagged = false;
+          _flaggedCount--;
+          _getAdjacentSquares(row, column).forEach((position) =>
+              _grid[position.row][position.column].adjacentFlags--);
+        }
+      });
+    }
   }
 
   void _handleWin() {
@@ -181,47 +190,26 @@ class _GameWidgetState extends State<GameWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return GameData(
-      grid: _grid,
-      coveredCount: _coveredCount,
-      flaggedCount: _flaggedCount,
-      handleTap: _handleTap,
-      handleLongPress: _handleLongPress,
-      child: SafeArea(child: BoardWidget(_grid)),
+    return //GameData(
+        // rowCount: widget.rowCount,
+        // columnCount: widget.columnCount,
+        // mineCount: widget.mineCount,
+        // grid: _grid,
+        // coveredCount: _coveredCount,
+        // flaggedCount: _flaggedCount,
+        // handleTap: _handleTap,
+        // handleLongPress: _handleLongPress,
+        SafeArea(
+      child: Column(
+        children: [
+          PanelWidget(
+            mineCount: widget.mineCount,
+            flaggedCount: _flaggedCount,
+            restart: () => setState(() => _initializeGame()),
+          ),
+          Expanded(child: BoardWidget(_grid, _handleTap, _handleLongPress)),
+        ],
+      ),
     );
-  }
-}
-
-class GameData extends InheritedModel<String> {
-  GameData({
-    required this.grid,
-    required this.coveredCount,
-    required this.flaggedCount,
-    required this.handleTap,
-    required this.handleLongPress,
-    required Widget child,
-  }) : super(child: child);
-
-  final List<List<Square>> grid;
-  final int coveredCount;
-  final int flaggedCount;
-  final void Function(int, int) handleTap;
-  final void Function(int, int) handleLongPress;
-
-  static GameData of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<GameData>()!;
-  }
-
-  @override
-  bool updateShouldNotify(covariant InheritedWidget oldWidget) {
-    return this != oldWidget;
-  }
-
-  @override
-  bool updateShouldNotifyDependent(
-      covariant InheritedModel<String> oldWidget, Set<String> dependencies) {
-    return dependencies.contains('grid') ||
-        dependencies.contains('coveredCount') ||
-        dependencies.contains('flaggedCount');
   }
 }

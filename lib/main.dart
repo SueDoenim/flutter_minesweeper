@@ -23,9 +23,11 @@ class MyApp extends StatelessWidget {
 }
 
 class BoardWidget extends StatefulWidget {
-  BoardWidget(this.grid);
+  BoardWidget(this.grid, this.handleTap, this.handleLongPress);
 
   final List<List<Square>> grid;
+  final void Function(int, int) handleTap;
+  final void Function(int, int) handleLongPress;
 
   @override
   _BoardWidgetState createState() => _BoardWidgetState();
@@ -141,9 +143,8 @@ class _BoardWidgetState extends State<BoardWidget> {
                     columnCount,
                     (c) => SquareWidget(
                           data: widget.grid[r][c],
-                          onTap: () => GameData.of(context).handleTap(r, c),
-                          onLongPress: () =>
-                              GameData.of(context).handleLongPress(r, c),
+                          onTap: () => widget.handleTap(r, c),
+                          onLongPress: () => widget.handleLongPress(r, c),
                         )),
               ),
             ),
@@ -154,19 +155,17 @@ class _BoardWidgetState extends State<BoardWidget> {
   }
 }
 
-class SquareWidget extends StatefulWidget {
-  SquareWidget(
-      {required this.data, required this.onTap, required this.onLongPress});
+class SquareWidget extends StatelessWidget {
+  SquareWidget({
+    required this.data,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   final Square data;
   final void Function() onTap;
   final void Function() onLongPress;
 
-  @override
-  _SquareWidgetState createState() => _SquareWidgetState();
-}
-
-class _SquareWidgetState extends State<SquareWidget> {
   static const List<IconData> adjacencyIcons = [
     Icons.filter_none,
     Icons.filter_1,
@@ -185,19 +184,53 @@ class _SquareWidgetState extends State<SquareWidget> {
       aspectRatio: 1,
       child: GestureDetector(
         child: Container(
-            color: (widget.data.isCovered) ? Colors.green : Colors.grey,
+            color: (data.isCovered) ? Colors.green : Colors.grey,
             child: Center(
-              child: Icon(widget.data.isCovered
-                  ? (widget.data.isFlagged
-                      ? Icons.outlined_flag
-                      : Icons.crop_square)
-                  : ((widget.data.isMine ?? false)
+              child: Icon(data.isCovered
+                  ? (data.isFlagged ? Icons.outlined_flag : Icons.crop_square)
+                  : ((data.isMine)
                       ? Icons.flare
-                      : (adjacencyIcons[widget.data.adjacentMines]))),
+                      : (adjacencyIcons[data.adjacentMines]))),
             )),
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        onSecondaryTap: widget.onLongPress,
+        onTap: onTap,
+        onLongPress: onLongPress,
+        onSecondaryTap: onLongPress,
+      ),
+    );
+  }
+}
+
+class PanelWidget extends StatelessWidget {
+  PanelWidget({
+    required this.mineCount,
+    required this.flaggedCount,
+    required this.restart,
+  });
+
+  final int mineCount;
+  final int flaggedCount;
+  final void Function() restart;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Row(
+        children: [
+          Icon(
+            Icons.flare,
+            color: Colors.amber,
+          ),
+          Text((mineCount - flaggedCount).toString()),
+          Container(
+            child: GestureDetector(
+              child: Icon(
+                Icons.refresh,
+                color: Colors.amber,
+              ),
+              onTap: () => restart(),
+            ),
+          ),
+        ],
       ),
     );
   }
