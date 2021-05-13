@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'main.dart';
+
+import 'layout.dart';
 
 class Square {
   Square(
@@ -195,7 +196,7 @@ class _GameWidgetState extends State<GameWidget> {
     return SafeArea(
       child: Column(
         children: [
-          TopPanelWidget(
+          PanelWidget(
             mineCount: widget.mineCount,
             flaggedCount: _flaggedCount,
             restart: () => setState(() => _initializeGame()),
