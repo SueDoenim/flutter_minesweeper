@@ -37,10 +37,11 @@ class GameWidget extends StatefulWidget {
 }
 
 class _GameWidgetState extends State<GameWidget> {
-  late bool _isInitialized;
+  late bool _gridIsInitialized;
   late int _coveredCount;
   late int _flaggedCount;
   late List<List<Square>> _grid;
+  late String _message;
 
   @override
   void initState() {
@@ -49,7 +50,7 @@ class _GameWidgetState extends State<GameWidget> {
   }
 
   void _initializeGame() {
-    _isInitialized = false;
+    _gridIsInitialized = false;
     _coveredCount = widget.rowCount * widget.columnCount;
     _flaggedCount = 0;
     _grid = List.generate(widget.rowCount, (r) {
@@ -57,6 +58,7 @@ class _GameWidgetState extends State<GameWidget> {
         return Square(true, false, 0, 0);
       });
     });
+    _message = '';
   }
 
   void _initializeGrid(int row, int column) {
@@ -80,7 +82,7 @@ class _GameWidgetState extends State<GameWidget> {
       }
     }
 
-    _isInitialized = true;
+    _gridIsInitialized = true;
   }
 
   List<BoardPosition> _getAdjacentSquares(int row, int column) {
@@ -140,13 +142,13 @@ class _GameWidgetState extends State<GameWidget> {
       return;
     }
     setState(() {
-      if (!_isInitialized) {
+      if (!_gridIsInitialized) {
         _initializeGrid(row, column);
       }
       _grid[row][column].isCovered = false;
       _coveredCount--;
       if (_grid[row][column].isMine == true) {
-        _handleLose();
+        return _handleLose();
       }
       if (_grid[row][column].adjacentMines == 0) {
         _getAdjacentSquares(row, column).forEach((position) {
@@ -157,7 +159,7 @@ class _GameWidgetState extends State<GameWidget> {
         });
       }
       if (_coveredCount == widget.mineCount) {
-        _handleWin();
+        return _handleWin();
       }
     });
   }
@@ -181,31 +183,23 @@ class _GameWidgetState extends State<GameWidget> {
   }
 
   void _handleWin() {
-    print('yay.');
+    setState(() => _message = 'You win!');
   }
 
   void _handleLose() {
-    print('u lose haha lozer');
+    setState(() => _message = 'You lose!');
   }
 
   @override
   Widget build(BuildContext context) {
-    return //GameData(
-        // rowCount: widget.rowCount,
-        // columnCount: widget.columnCount,
-        // mineCount: widget.mineCount,
-        // grid: _grid,
-        // coveredCount: _coveredCount,
-        // flaggedCount: _flaggedCount,
-        // handleTap: _handleTap,
-        // handleLongPress: _handleLongPress,
-        SafeArea(
+    return SafeArea(
       child: Column(
         children: [
-          PanelWidget(
+          TopPanelWidget(
             mineCount: widget.mineCount,
             flaggedCount: _flaggedCount,
             restart: () => setState(() => _initializeGame()),
+            message: _message,
           ),
           Expanded(child: BoardWidget(_grid, _handleTap, _handleLongPress)),
         ],

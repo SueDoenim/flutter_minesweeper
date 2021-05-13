@@ -200,35 +200,44 @@ class SquareWidget extends StatelessWidget {
   }
 }
 
-class PanelWidget extends StatelessWidget {
-  PanelWidget({
+class TopPanelWidget extends StatelessWidget {
+  TopPanelWidget({
     required this.mineCount,
     required this.flaggedCount,
     required this.restart,
+    required this.message,
   });
 
   final int mineCount;
   final int flaggedCount;
   final void Function() restart;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      color: Colors.grey,
       child: Row(
         children: [
           Icon(
             Icons.flare,
             color: Colors.amber,
           ),
-          Text((mineCount - flaggedCount).toString()),
-          Container(
-            child: GestureDetector(
-              child: Icon(
-                Icons.refresh,
-                color: Colors.amber,
-              ),
-              onTap: () => restart(),
+          Text(
+            (mineCount - flaggedCount).toString(),
+          ),
+          Expanded(
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
             ),
+          ),
+          GestureDetector(
+            child: Icon(
+              Icons.refresh,
+              color: Colors.amber,
+            ),
+            onTap: () => restart(),
           ),
         ],
       ),
