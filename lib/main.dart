@@ -26,8 +26,8 @@ class BoardWidget extends StatefulWidget {
   BoardWidget(this.grid, this.handleTap, this.handleLongPress);
 
   final List<List<Square>> grid;
-  final void Function(int, int) handleTap;
-  final void Function(int, int) handleLongPress;
+  final void Function(int, int)? handleTap;
+  final void Function(int, int)? handleLongPress;
 
   @override
   _BoardWidgetState createState() => _BoardWidgetState();
@@ -143,8 +143,12 @@ class _BoardWidgetState extends State<BoardWidget> {
                     columnCount,
                     (c) => SquareWidget(
                           data: widget.grid[r][c],
-                          onTap: () => widget.handleTap(r, c),
-                          onLongPress: () => widget.handleLongPress(r, c),
+                          onTap: (widget.handleTap != null)
+                              ? () => widget.handleTap!(r, c)
+                              : null,
+                          onLongPress: (widget.handleLongPress != null)
+                              ? () => widget.handleLongPress!(r, c)
+                              : null,
                         )),
               ),
             ),
@@ -163,8 +167,8 @@ class SquareWidget extends StatelessWidget {
   });
 
   final Square data;
-  final void Function() onTap;
-  final void Function() onLongPress;
+  final void Function()? onTap;
+  final void Function()? onLongPress;
 
   static const List<IconData> adjacencyIcons = [
     Icons.filter_none,
@@ -205,16 +209,22 @@ class TopPanelWidget extends StatelessWidget {
     required this.mineCount,
     required this.flaggedCount,
     required this.restart,
-    required this.message,
+    required this.gameWon,
   });
 
   final int mineCount;
   final int flaggedCount;
   final void Function() restart;
-  final String message;
+  final bool? gameWon;
 
   @override
   Widget build(BuildContext context) {
+    String message;
+    if (gameWon == null) {
+      message = '';
+    } else {
+      message = gameWon! ? 'You win!' : 'You lose!';
+    }
     return Container(
       color: Colors.grey,
       child: Row(

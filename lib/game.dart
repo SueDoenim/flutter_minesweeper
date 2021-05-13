@@ -41,7 +41,7 @@ class _GameWidgetState extends State<GameWidget> {
   late int _coveredCount;
   late int _flaggedCount;
   late List<List<Square>> _grid;
-  late String _message;
+  bool? _gameWon;
 
   @override
   void initState() {
@@ -58,7 +58,7 @@ class _GameWidgetState extends State<GameWidget> {
         return Square(true, false, 0, 0);
       });
     });
-    _message = '';
+    _gameWon = null;
   }
 
   void _initializeGrid(int row, int column) {
@@ -119,7 +119,7 @@ class _GameWidgetState extends State<GameWidget> {
   void _handleTap(int row, int column) {
     if (_grid[row][column].isCovered == true &&
         _grid[row][column].isFlagged == false) {
-      _uncoverSquare(row, column);
+      return _uncoverSquare(row, column);
     }
     if (_grid[row][column].isCovered == false) {
       if (_grid[row][column].adjacentFlags ==
@@ -183,11 +183,11 @@ class _GameWidgetState extends State<GameWidget> {
   }
 
   void _handleWin() {
-    setState(() => _message = 'You win!');
+    setState(() => _gameWon = true);
   }
 
   void _handleLose() {
-    setState(() => _message = 'You lose!');
+    setState(() => _gameWon = false);
   }
 
   @override
@@ -199,9 +199,15 @@ class _GameWidgetState extends State<GameWidget> {
             mineCount: widget.mineCount,
             flaggedCount: _flaggedCount,
             restart: () => setState(() => _initializeGame()),
-            message: _message,
+            gameWon: _gameWon,
           ),
-          Expanded(child: BoardWidget(_grid, _handleTap, _handleLongPress)),
+          Expanded(
+            child: BoardWidget(
+              _grid,
+              (_gameWon == null) ? _handleTap : null,
+              (_gameWon == null) ? _handleLongPress : null,
+            ),
+          ),
         ],
       ),
     );
