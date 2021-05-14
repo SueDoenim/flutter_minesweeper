@@ -144,22 +144,25 @@ class GridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Table(
-        defaultColumnWidth: FixedColumnWidth(squareWidth),
-        children: List.generate(rowCount, (r) {
-          return TableRow(
-            children: List.generate(columnCount, (c) {
-              return SquareWidget(
-                data: grid[r][c],
-                onTap: (handleTap != null) ? () => handleTap!(r, c) : null,
-                onLongPress: (handleLongPress != null)
-                    ? () => handleLongPress!(r, c)
-                    : null,
-              );
-            }),
-          );
-        }),
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Table(
+          defaultColumnWidth: FixedColumnWidth(squareWidth),
+          children: List.generate(rowCount, (r) {
+            return TableRow(
+              children: List.generate(columnCount, (c) {
+                return SquareWidget(
+                  data: grid[r][c],
+                  onTap: (handleTap != null) ? () => handleTap!(r, c) : null,
+                  onLongPress: (handleLongPress != null)
+                      ? () => handleLongPress!(r, c)
+                      : null,
+                );
+              }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -176,8 +179,8 @@ class SquareWidget extends StatelessWidget {
   final void Function()? onTap;
   final void Function()? onLongPress;
 
-  static const List<IconData> adjacencyIcons = [
-    Icons.filter_none,
+  static const List<IconData?> adjacencyIcons = [
+    null,
     Icons.filter_1,
     Icons.filter_2,
     Icons.filter_3,
@@ -194,13 +197,20 @@ class SquareWidget extends StatelessWidget {
       aspectRatio: 1,
       child: GestureDetector(
         child: Container(
-            color: (data.isCovered) ? Colors.green : Colors.grey,
+            margin: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: (data.isCovered) ? Colors.blue : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Center(
-              child: Icon(data.isCovered
-                  ? (data.isFlagged ? Icons.outlined_flag : Icons.crop_square)
-                  : ((data.isMine)
-                      ? Icons.flare
-                      : (adjacencyIcons[data.adjacentMines]))),
+              child: Icon(
+                data.isCovered
+                    ? (data.isFlagged ? Icons.outlined_flag : null)
+                    : ((data.isMine!)
+                        ? Icons.flare
+                        : (adjacencyIcons[data.adjacentMines])),
+                color: Colors.amber,
+              ),
             )),
         onTap: onTap,
         onLongPress: onLongPress,
