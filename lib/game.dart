@@ -69,16 +69,10 @@ class _GameWidgetState extends State<GameWidget> {
     // mines as well.
     final int squareCount = widget.rowCount * widget.columnCount;
     final int adjacentCount = _getAdjacentSquares(row, column).length;
-    // List<int> randomList = List.generate(squareCount - 1, (i) => i)..shuffle();
     List<int> randomList =
         List.generate(squareCount - adjacentCount - 1, (i) => i)..shuffle();
-
     List<int> adjacentRandomList =
         List.generate(adjacentCount, (i) => squareCount - 9 + i)..shuffle();
-
-    // List<List<bool?>> mineGrid = List.generate(widget.rowCount, (r) {
-    //   return List.generate(widget.columnCount, (c) => null);
-    // });
 
     _grid[row][column].isMine = false;
 
@@ -107,27 +101,10 @@ class _GameWidgetState extends State<GameWidget> {
         }
       }
     }
-
-    // randomList.insert(row * widget.columnCount + column, squareCount - 1);
-
-    // for (int r = 0; r < widget.rowCount; r++) {
-    //   for (int c = 0; c < widget.columnCount; c++) {
-    //     if (randomList[r * widget.columnCount + c] < widget.mineCount) {
-    //       _grid[r][c].isMine = true;
-    //       _getAdjacentSquares(r, c).forEach((position) {
-    //         _grid[position.row][position.column].adjacentMines++;
-    //       });
-    //     } else {
-    //       _grid[r][c].isMine = false;
-    //     }
-    //   }
-    // }
   }
 
   List<BoardPosition> _getAdjacentSquares(int row, int column) {
     List<BoardPosition> adjacentSquares = [];
-    // Return every square around the given square, but don't return the given
-    // square or squares that don't exist in the grid.
     if (row - 1 >= 0 && column - 1 >= 0) {
       adjacentSquares.add(BoardPosition(row - 1, column - 1));
     }
