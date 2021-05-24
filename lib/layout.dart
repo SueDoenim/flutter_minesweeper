@@ -273,7 +273,6 @@ class PanelWidget extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(fontSize: 32),
               textAlign: TextAlign.center,
             ),
           ),
