@@ -6,9 +6,10 @@ import 'dart:math';
 import 'game.dart';
 
 class BoardWidget extends StatefulWidget {
-  BoardWidget(this.grid, this.handleTap, this.handleLongPress);
+  BoardWidget(this.grid, this.gameWon, this.handleTap, this.handleLongPress);
 
   final List<List<Square>> grid;
+  final bool? gameWon;
   final void Function(int, int)? handleTap;
   final void Function(int, int)? handleLongPress;
 
@@ -118,6 +119,7 @@ class _BoardWidgetState extends State<BoardWidget> {
         transformationController: _controller,
         child: GridWidget(
           grid: widget.grid,
+          gameWon: widget.gameWon,
           squareWidth: squareWidth,
           handleTap: widget.handleTap,
           handleLongPress: widget.handleLongPress,
@@ -131,12 +133,14 @@ class GridWidget extends StatelessWidget {
   GridWidget({
     required this.grid,
     required this.squareWidth,
+    required this.gameWon,
     required this.handleTap,
     required this.handleLongPress,
   })   : rowCount = grid.length,
         columnCount = grid[0].length;
   final List<List<Square>> grid;
   final double squareWidth;
+  final bool? gameWon;
   final void Function(int, int)? handleTap;
   final void Function(int, int)? handleLongPress;
   final int rowCount;
@@ -154,6 +158,7 @@ class GridWidget extends StatelessWidget {
               children: List.generate(columnCount, (c) {
                 return SquareWidget(
                   data: grid[r][c],
+                  gameWon: gameWon,
                   onTap: (handleTap != null) ? () => handleTap!(r, c) : null,
                   onLongPress: (handleLongPress != null)
                       ? () => handleLongPress!(r, c)
@@ -171,28 +176,48 @@ class GridWidget extends StatelessWidget {
 class SquareWidget extends StatelessWidget {
   SquareWidget({
     required this.data,
+    required this.gameWon,
     required this.onTap,
     required this.onLongPress,
   });
 
   final Square data;
+  final bool? gameWon;
   final void Function()? onTap;
   final void Function()? onLongPress;
 
-  static const List<IconData?> adjacencyIcons = [
-    null,
-    Icons.filter_1,
-    Icons.filter_2,
-    Icons.filter_3,
-    Icons.filter_4,
-    Icons.filter_5,
-    Icons.filter_6,
-    Icons.filter_7,
-    Icons.filter_8,
-  ];
-
   @override
   Widget build(BuildContext context) {
+    Widget? icon;
+    if (data.isCovered) {
+      if (gameWon == null) {
+        icon = data.isFlagged ? Icon(Icons.flag, color: Colors.amber) : null;
+      } else {
+        if (data.isFlagged && data.isMine!) {
+          icon = GridView.count(
+            crossAxisCount: 2,
+            physics: NeverScrollableScrollPhysics(),
+            children: [
+              SizedBox.shrink(),
+              Icon(Icons.flag, color: Colors.amber),
+              Icon(Icons.flare, color: Colors.amber),
+              SizedBox.shrink(),
+            ],
+          );
+        } else if (data.isFlagged) {
+          icon = Icon(Icons.flag, color: Colors.amber);
+        } else if (data.isMine!) {
+          icon = Icon(Icons.flare, color: Colors.amber);
+        }
+      }
+    } else {
+      if (data.isMine!) {
+        icon = Icon(Icons.flare, color: Colors.amber);
+      } else {
+        icon =
+            data.adjacentMines > 0 ? Text(data.adjacentMines.toString()) : null;
+      }
+    }
     return AspectRatio(
       aspectRatio: 1,
       child: GestureDetector(
@@ -203,14 +228,7 @@ class SquareWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-              child: Icon(
-                data.isCovered
-                    ? (data.isFlagged ? Icons.outlined_flag : null)
-                    : ((data.isMine!)
-                        ? Icons.flare
-                        : (adjacencyIcons[data.adjacentMines])),
-                color: Colors.amber,
-              ),
+              child: icon,
             )),
         onTap: onTap,
         onLongPress: onLongPress,
@@ -255,6 +273,7 @@ class PanelWidget extends StatelessWidget {
           Expanded(
             child: Text(
               message,
+              style: TextStyle(fontSize: 32),
               textAlign: TextAlign.center,
             ),
           ),

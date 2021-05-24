@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import 'layout.dart';
 
@@ -208,23 +209,30 @@ class _GameWidgetState extends State<GameWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          PanelWidget(
-            mineCount: widget.mineCount,
-            flaggedCount: _flaggedCount,
-            restart: () => setState(() => _initializeGame()),
-            gameWon: _gameWon,
-          ),
-          Expanded(
-            child: BoardWidget(
-              _grid,
-              (_gameWon == null) ? _handleTap : null,
-              (_gameWon == null) ? _handleLongPress : null,
+    return DefaultTextStyle(
+      style: TextStyle(
+        color: Colors.amber,
+        fontSize: 32,
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            PanelWidget(
+              mineCount: widget.mineCount,
+              flaggedCount: _flaggedCount,
+              restart: () => setState(() => _initializeGame()),
+              gameWon: _gameWon,
             ),
-          ),
-        ],
+            Expanded(
+              child: BoardWidget(
+                _grid,
+                _gameWon,
+                (_gameWon == null) ? _handleTap : null,
+                (_gameWon == null) ? _handleLongPress : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
